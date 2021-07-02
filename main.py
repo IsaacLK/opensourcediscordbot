@@ -14,5 +14,12 @@ async def on_ready():
 @client.command()
 async def hello(ctx):    
     await ctx.send("Hello!")
+@client.command()
+async def github(ctx):
+    await ctx.send("https://github.com/IsaacLK/opensourcediscordbot")
+@client.command()
+async def ping(ctx):
+    ping = client.latency 
+    await ctx.send("The bot's ping is "+ str(round(ping * 1000)) + "ms")
 
 client.run(token)
