@@ -13,13 +13,17 @@ async def on_ready():
     print("code rcan")
 @client.command()
 async def hello(ctx):    
-    await ctx.send("Hello!")
+    embed=discord.Embed(title="Hello!", color=0x003b46)
+    await ctx.send(embed=embed)
 @client.command()
 async def github(ctx):
-    await ctx.send("https://github.com/IsaacLK/opensourcediscordbot")
+    embed=discord.Embed(title="Click here to open up the GitHub!", url="https://github.com/IsaacLK/opensourcediscordbot", color=0x003b46)
+    await ctx.send(embed=embed)
 @client.command()
 async def ping(ctx):
-    ping = client.latency 
-    await ctx.send("The bot's ping is "+ str(round(ping * 1000)) + "ms")
+    ping = client.latency
+    embed=discord.Embed(title="The bot's ping is "+ str(round(ping * 1000)) + "ms", color=0x003b46)
+    await ctx.send(embed=embed)
+    
 
 client.run(token)
