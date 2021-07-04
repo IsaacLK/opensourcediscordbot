@@ -8,6 +8,12 @@ Start Out with:
 
 Python 3
 
-pip install discord
-pip install random
+You will need the following things installed using pip
+
+Discord
+Random
+Dotenv
+
+
+I recommend hosting this bot on https://repl.it as it is free. You can easily get it setup by importing from Github.
 
