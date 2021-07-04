@@ -3,6 +3,7 @@ import discord
 import random
 from discord.ext import commands
 from dotenv import load_dotenv
+from keep_alive import keep_alive
 
 load_dotenv()
 #fill with discord bot token
@@ -33,4 +34,5 @@ async def ping(ctx):
 async def pfp(ctx):
   await ctx.send(ctx.author.avatar_url)    
 
+keep_alive()
 client.run(token)
