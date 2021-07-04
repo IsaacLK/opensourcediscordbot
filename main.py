@@ -10,11 +10,11 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 
-client = commands.Bot(command_prefix='/')
+client = commands.Bot(command_prefix='.')
 @client.event
 async def on_ready():
     print(f'{client.user} now online')
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='for /help | https://github.com/IsaacLK/opensourcediscordbot'))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='for .help | https://github.com/IsaacLK/opensourcediscordbot'))
     
 @client.command()
 async def hello(ctx):    
@@ -29,6 +29,8 @@ async def ping(ctx):
     ping = client.latency
     embed=discord.Embed(title="The bot's ping is "+ str(round(ping * 1000)) + "ms", color=0x003b46)
     await ctx.send(embed=embed)
-    
+@client.command()
+async def pfp(ctx):
+  await ctx.send(ctx.author.avatar_url)    
 
 client.run(token)
