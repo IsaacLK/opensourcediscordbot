@@ -14,11 +14,11 @@ You will need the following things installed using pip
 
 Discord
 Random
-Dotenv
-MoviePy
-FFMPEG
+MoviePy (not needed anymore)
+FFMPEG 
 FFMPEG-Python
-PyTube
+PyTube(not needed anymore)
+youtube-dl
 
 
 I recommend hosting this bot on https://repl.it as it is free. You can easily get it setup by importing from Github.
