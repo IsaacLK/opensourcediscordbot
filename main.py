@@ -3,18 +3,20 @@ import os
 import discord
 import random
 from discord.ext import commands
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 import ffmpeg
-import moviepy.editor as mp
-from pytube import YouTube
+#import moviepy.editor as mp
+import youtube_dl
+#from pytube import youtube
+#from pytube import YouTube
 #import threading 
 #import asyncio
 
-load_dotenv()
+#load_dotenv()
 #fill with discord bot token
 
-token = os.getenv('TOKEN')
+token = ""
 
 
 #
@@ -73,18 +75,51 @@ async def pfp(ctx):
 async def ytdownload(ctx, link, audio = ""):
   
   print("downloading")
+  try:
+    os.remove("download.mp4")
+  except:
+    pass
+  try:
+    os.remove("download.mp4.mkv")
+  except:
+    pass
+  try:
+    os.remove("resized.mp4")
+  except:
+    pass
+  try:
+    os.remove("finished.mov")
+  except:
+    pass
+  try:
+    os.remove("audio.mp3")
+  except:
+    pass
+
+
 
   embed=discord.Embed(title="Downloading & Compressing the video/audio! The wait is about 2-4 minutes because we got slow servers. ", color=0x003b46)
   await ctx.send(embed=embed)
   
   video = link
-  yt = YouTube(f"{video}")
-  title = yt.title
+  ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
 
-  print(f"Ok, about to download: {title}!")
+  with ydl:
+      result = ydl.extract_info(
+          video,
+          download=False # We just want to extract the info
+      )
+  vidlength = result['duration']
+  print("video length is ",vidlength)
+
+  #yt = pytube.YouTube(video)
+  #print(yt)
+  #title = yt.title
+
+  #print(f"Ok, about to download: {title}!")
   
-  print('length is', yt.length)
-  lengthM = yt.length / 60
+  #print('length is', yt.length)
+  lengthM = vidlength / 60
   if audio == "mp3" and lengthM >= 5:
     
     embed=discord.Embed(title="Cannot Download Video (Error: Audio Over 5 minutes not supported)", color=0x003b46)
@@ -97,75 +132,86 @@ async def ytdownload(ctx, link, audio = ""):
       embed=discord.Embed(title="Cannot Download Video (Error: Videos greater than 10 minutes are not supported)", color=0x003b46)
       await ctx.send(embed=embed)
     else:
-
-      oostream = yt.streams.first().download()
-      
-      
-
-
-      os.rename(oostream, 'download.mp4')
-      print(f"Done! I have downloaded: {title}!")
-      #compress_video('download.mp4','finished.mov',8*1024)
-      file_size = os.path.getsize('download.mp4')
-      print("File Size is :", file_size, "bytes")
       if audio == "mp3":
         
-        video = mp.VideoFileClip(os.path.join("download.mp4"))
-        video.audio.write_audiofile(os.path.join("audio.mp3"))
+        ydl_opts = {'outtmpl': 'audio.mp3', 'format': 'bestaudio/best', 'extractaudio' : True, 'audioformat' : "mp3",'noplaylist' : True}
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+          ydl.download([video])
         file_size = os.path.getsize('audio.mp3')
         if file_size <= 7777777:
           
           await ctx.send(file=discord.File(r'audio.mp3'))
-      else:
-        
-        if file_size <= 7777777:
-          await ctx.send(file=discord.File(r'download.mp4'))
         else:
-          
+          print("File size requirement not met")
+      else:
+      
+        #oostream = yt.streams.first().download()
+        ydl_opts = {'outtmpl': 'download.mp4', 'format': 'worst'}
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+          ydl.download([video])
+          #downloadvid['ext'] = "download.mp4"
+          #fname = downloadvid['ext']
+          #oostream = open(fname)
+        
+
+
+        #os.rename(oostream, 'download.mp4')
+        #print(f"Done! I have downloaded: {title}!")
+        #compress_video('download.mp4','finished.mov',8*1024)
+        try:
+          os.rename('download.mp4.mkv', 'download.mp4')
+        except:
+          pass
+          file_size = os.path.getsize('download.mp4')
+          print("File Size is :", file_size, "bytes")
           if file_size <= 7777777:
             await ctx.send(file=discord.File(r'download.mp4'))
           else:
-            video_full_path = "download.mp4"
-            output_file_name = "finished.mov"
-            target_size = 8 * 1024
             
-
-
+            if file_size <= 7777777:
+              await ctx.send(file=discord.File(r'download.mp4'))
+            else:
+              video_full_path = "download.mp4"
+              output_file_name = "finished.mov"
+              target_size = 8 * 1024
               
-            clip = mp.VideoFileClip(video_full_path)
-            clip_resized = clip.resize(height=360) # make the height 360px ( According to moviePy documenation The width is then computed so that the width/height ratio is conserved.)
-            clip_resized.write_videofile("resized.mp4")
-            
-            # Reference: https://en.wikipedia.org/wiki/Bit_rate#Encoding_bit_rate
-            min_audio_bitrate = 32000
-            max_audio_bitrate = 256000
-            video_full_path = "resized.mp4"
-            probe = ffmpeg.probe(video_full_path)
-            # Video duration, in s.
-            duration = float(probe['format']['duration'])
-            # Audio bitrate, in bps.
-            audio_bitrate = float(next((s for s in probe['streams'] if s['codec_type'] == 'audio'), None)['bit_rate'])
-            # Target total bitrate, in bps.
-            target_total_bitrate = (target_size * 1024 * 8) / (1.073741824 * duration)
 
-            # Target audio bitrate, in bps
-            if 10 * audio_bitrate > target_total_bitrate:
-                audio_bitrate = target_total_bitrate / 10
-                if audio_bitrate < min_audio_bitrate < target_total_bitrate:
-                    audio_bitrate = min_audio_bitrate
-                elif audio_bitrate > max_audio_bitrate:
-                    audio_bitrate = max_audio_bitrate
-            # Target video bitrate, in bps.
-            video_bitrate = target_total_bitrate - audio_bitrate
-            
-            i = ffmpeg.input(video_full_path)
-            ffmpeg.output(i, os.devnull,
-                          **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 1, 'f': 'mov'}
-                          ).overwrite_output().run()
-            ffmpeg.output(i, output_file_name,
-                          **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
-                          ).overwrite_output().run()
-            await ctx.send(file=discord.File(r'finished.mov'))
+
+                
+              #clip = mp.VideoFileClip(video_full_path)
+              #clip_resized = clip.resize(height=360) # make the height 360px ( According to moviePy documenation The width is then computed so that the width/height ratio is conserved.)
+              #clip_resized.write_videofile("resized.mp4")
+              
+              
+              min_audio_bitrate = 32000
+              max_audio_bitrate = 256000
+              #video_full_path = "resized.mp4"
+              probe = ffmpeg.probe(video_full_path)
+              # Video duration, in s.
+              duration = float(probe['format']['duration'])
+              # Audio bitrate, in bps.
+              audio_bitrate = float(next((s for s in probe['streams'] if s['codec_type'] == 'audio'), None)['bit_rate'])
+              # Target total bitrate, in bps.
+              target_total_bitrate = (target_size * 1024 * 8) / (1.073741824 * duration)
+
+              # Target audio bitrate, in bps
+              if 10 * audio_bitrate > target_total_bitrate:
+                  audio_bitrate = target_total_bitrate / 10
+                  if audio_bitrate < min_audio_bitrate < target_total_bitrate:
+                      audio_bitrate = min_audio_bitrate
+                  elif audio_bitrate > max_audio_bitrate:
+                      audio_bitrate = max_audio_bitrate
+              # Target video bitrate, in bps.
+              video_bitrate = target_total_bitrate - audio_bitrate
+              
+              i = ffmpeg.input(video_full_path)
+              ffmpeg.output(i, os.devnull,
+                            **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 1, 'f': 'mov'}
+                            ).overwrite_output().run()
+              ffmpeg.output(i, output_file_name,
+                            **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
+                            ).overwrite_output().run()
+              await ctx.send(file=discord.File(r'finished.mov'))
     
 
 
