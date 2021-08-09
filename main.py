@@ -146,7 +146,7 @@ async def ytdownload(ctx, link, audio = ""):
       else:
       
         #oostream = yt.streams.first().download()
-        ydl_opts = {'outtmpl': 'download.mp4', 'format': 'best'}
+        ydl_opts = {'outtmpl': 'download.mp4', 'format': 'worst'}
         # 'format': 'worst'
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
           ydl.download([video])
@@ -188,8 +188,8 @@ async def ytdownload(ctx, link, audio = ""):
               #clip_resized.write_videofile("resized.mp4")
               
               
-              min_audio_bitrate = 96000
-              max_audio_bitrate = 196000
+              min_audio_bitrate = 64000
+              max_audio_bitrate = 192000
               #video_full_path = "resized.mp4"
               probe = ffmpeg.probe(video_full_path)
               # Video duration, in s.
