@@ -1,31 +1,16 @@
-
 import os
 import discord
 import random
 from discord.ext import commands
+import pydrive
 #from dotenv import load_dotenv
-
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
 import ffmpeg
-#import moviepy.editor as mp
 import youtube_dl
-#from pytube import youtube
-#from pytube import YouTube
-#import threading 
-#import asyncio
-
-#load_dotenv()
-#fill with discord bot token
-
-token = ""
-
-
-#
-
-
+token = os.getenv("TOKEN")
 client = commands.Bot(command_prefix='.')
 client.remove_command('help')
-
-
 @client.event
 async def on_ready():
     print(f'{client.user} now online')
@@ -53,7 +38,6 @@ async def help(ctx):
   embed.add_field(name=".ping", value="Displays bot ping", inline=True)
   embed.add_field(name=".pfp", value="Displays your PFP as image", inline=True)
   embed.add_field(name=".ytdownload", value="Downloads a youtube video (usage example: .ytdownload https://youtube.com/video/asdji23Jdjio or something like that.) Add mp3 to end of command to output as audio (example ytdownload https://youtube.com/video/asdji23Jdjio mp3)", inline=True)
-
   await ctx.send(embed=embed)
 @client.command()
 async def hello(ctx):    
@@ -95,9 +79,6 @@ async def ytdownload(ctx, link, audio = ""):
     os.remove("audio.mp3")
   except:
     pass
-
-
-
   embed=discord.Embed(title="Downloading & Compressing the video/audio! The wait is about 2-4 minutes because we got slow servers. ", color=0x003b46)
   await ctx.send(embed=embed)
   
@@ -124,9 +105,6 @@ async def ytdownload(ctx, link, audio = ""):
     
     embed=discord.Embed(title="Cannot Download Video (Error: Audio Over 5 minutes not supported)", color=0x003b46)
     await ctx.send(embed=embed)
-      
-      
-    
   else:
     if lengthM >= 10:
       embed=discord.Embed(title="Cannot Download Video (Error: Videos greater than 10 minutes are not supported)", color=0x003b46)
@@ -145,20 +123,11 @@ async def ytdownload(ctx, link, audio = ""):
           print("File size requirement not met")
       else:
       
-        #oostream = yt.streams.first().download()
+        
         ydl_opts = {'outtmpl': 'download.mp4', 'format': 'worst'}
         # 'format': 'worst'
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-          ydl.download([video])
-          #downloadvid['ext'] = "download.mp4"
-          #fname = downloadvid['ext']
-          #oostream = open(fname)
-        
-
-
-        #os.rename(oostream, 'download.mp4')
-        #print(f"Done! I have downloaded: {title}!")
-        #compress_video('download.mp4','finished.mov',8*1024)
+          ydl.download([video])   
         try:
           os.rename('download.mp4.mkv', 'download.mp4')
         except:
@@ -179,17 +148,10 @@ async def ytdownload(ctx, link, audio = ""):
               video_full_path = "download.mp4"
               output_file_name = "finished.mov"
               target_size = 8 * 1024
-              
-
-
-                
               #clip = mp.VideoFileClip(video_full_path)
               #clip_resized = clip.resize(height=360) # make the height 360px ( According to moviePy documenation The width is then computed so that the width/height ratio is conserved.)
-              #clip_resized.write_videofile("resized.mp4")
-              
-              
-              min_audio_bitrate = 64000
-              max_audio_bitrate = 192000
+              min_audio_bitrate = 48000
+              max_audio_bitrate = 96000
               #video_full_path = "resized.mp4"
               probe = ffmpeg.probe(video_full_path)
               # Video duration, in s.
@@ -199,14 +161,14 @@ async def ytdownload(ctx, link, audio = ""):
               # Target total bitrate, in bps.
               target_total_bitrate = (target_size * 1024 * 8) / (1.073741824 * duration)
 
-              # Target audio bitrate, in bps
+              
               if 10 * audio_bitrate > target_total_bitrate:
                   audio_bitrate = target_total_bitrate / 10
                   if audio_bitrate < min_audio_bitrate < target_total_bitrate:
                       audio_bitrate = min_audio_bitrate
                   elif audio_bitrate > max_audio_bitrate:
                       audio_bitrate = max_audio_bitrate
-              # Target video bitrate, in bps.
+              
               video_bitrate = target_total_bitrate - audio_bitrate
               
               i = ffmpeg.input(video_full_path)
@@ -217,8 +179,4 @@ async def ytdownload(ctx, link, audio = ""):
                             **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
                             ).overwrite_output().run()
               await ctx.send(file=discord.File(r'finished.mov'))
-    
-
-
-
 client.run(token)
